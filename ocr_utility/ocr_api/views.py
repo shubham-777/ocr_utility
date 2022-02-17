@@ -10,6 +10,12 @@ def hello_world(request):
     return Response({"message": "Hello, world! This is ocr_utility"})
 
 
+@api_view(["POST"])
+def input_ocr(request):
+    return Response({"your_ocr": request.data})
+
+
 urlpatterns = [
     url(r"hello", hello_world),
+    url(r"input_ocr", input_ocr),
 ]
