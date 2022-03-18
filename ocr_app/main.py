@@ -1,40 +1,29 @@
-import os
+"""
+Main file for the ocr_utility.
+"""
 import uvicorn
-import mimetypes
-from fastapi import FastAPI, Request, status, Response
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exception_handlers import http_exception_handler
+from fastapi import FastAPI
+from routers.tesseract import router
 
-from routers import tesseract
+AUTHOR = "Shubham Ahinave"
 
-author = "Shubham Ahinave"
-
-app = FastAPI(title="OCR",
+app = FastAPI(title="ocr_utility",
               version="1.0.0",
               contact={
                   "name": "Shubham Ahinave",
                   "url": "https://github.com/shubham-777",
                   "email": "codesign.developers@gmail.com",
               })
+app.include_router(router)
 
 
-@app.get("/", status_code=200)
-def root(request: Response):
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"health": "success"})
-
-
-app.include_router(tesseract.router)
-
-
-@app.exception_handler(StarletteHTTPException)
-async def my_custom_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 404:
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=exc.detail)
-    else:
-        # Just use FastAPI's built-in handler for other errors
-        return await http_exception_handler(request, exc)
+@app.get("/")
+async def root():
+    """
+    root function for ocr_utility.
+    """
+    return {"message": "ocr_utility"}
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
