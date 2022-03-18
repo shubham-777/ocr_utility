@@ -1,8 +1,9 @@
-# OCR Utility using FastAPI
+# ocr_utility using FastAPI
 
-ocr_utility is a ocr comparision utility for developers.
+ocr_utility is a ocr comparision utility.
 
 ## Project Structure
+
 ```
 .
 ├── ocr_app
@@ -21,18 +22,24 @@ ocr_utility is a ocr comparision utility for developers.
 │   │   └── tesseract.py
 │   └── utils
 │       ├── Helper.py
-│       ├── TesseractOCR.py
+│       ├── tesseract.py
 │       └── __init__.py
 ├── README.md
 └── requirement.txt
 ```
-## Requirements:
 
-1. Python 3.6+
-2. pip modules in requirements.txt
+## Notes:
 
-### Installation command for pip modules:
+- Tested on Python 3.10.2
+
+### Command to install all requirements (virtual environment recommended):
 
 ```sh
-pip install -r .\requirement.txt
+pip install -r .\requirements.txt
+```
+
+### Command to run the app:
+
+```sh
+python ./ocr_app/main.py
 ```
