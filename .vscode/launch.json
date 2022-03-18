@@ -5,14 +5,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Django",
+      "name": "main - ocr_app",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}\\ocr_utility\\manage.py",
-      "args": [
-        "runserver"
-      ],
-      "django": true
+      "program": "${workspaceFolder}/ocr_app/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
     }
   ]
 }
