@@ -43,3 +43,15 @@ pip install -r .\requirements.txt
 ```sh
 python ./ocr_app/main.py
 ```
+
+### Command to build the docker image:
+
+```sh
+docker build -t ocr_utility .
+```
+
+### Command to run the docker image:
+
+```sh
+docker run -p 8000:8000 ocr_utility
+```
