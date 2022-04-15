@@ -1,7 +1,12 @@
 """
 python file containing all helper functions needed for tesseract functions.
 """
+import uuid
 from fastapi import HTTPException, status
+import subprocess
+import os
+from core.configurations import TEMP_FOLDER_PATH, PRODUCTION_MODE, APPIMAGE_510_PATH
+
 SUPPORTED_TYPES = [
     {"title": "Bitmap Image File",
      "file_extension": ["bmp", "dib"],
@@ -20,7 +25,6 @@ SUPPORTED_TYPES = [
      "file_extension": ["tiff", "tif"],
      "media_type": ["image/tiff", "image/tiff-fx"]}
 ]
-
 SUPPORTED_MEDIA_TYPES = []
 for item in [x["media_type"] for x in SUPPORTED_TYPES]:
     SUPPORTED_MEDIA_TYPES.extend(item)
@@ -38,32 +42,57 @@ def validate_file_type(upload_file_obj):
     if not (upload_file_obj.content_type.lower() in SUPPORTED_MEDIA_TYPES and file_extension.lower() in SUPPORTED_FILE_EXTENSIONS):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File type not supported. Check supported file formats by sending a get request to /tesseract/supported_formats/.")
-# import os.path
-# import subprocess, shlex
-# import pandas as pd
-
-# lstr_tesseract = "tesseract"
 
 
-# def get_text_using_tesseract(pstr_image_path, pint_psm, pint_oem, pstr_lang):
-#     try:
-#         lstr_image_name, lstr_extension = os.path.splitext(os.path.basename(pstr_image_path))
-#         lstr_output_file_path = os.path.join(os.path.dirname(pstr_image_path), lstr_image_name)
-#         lstr_cmd = f"{lstr_tesseract} {pstr_image_path} {lstr_output_file_path} -l {pstr_lang} --oem {pint_oem} --psm {pint_psm} tsv"
-#         llst_command = lstr_cmd.split(" ")
-#         lobj_popen = subprocess.Popen(llst_command, stdout=subprocess.PIPE)
-#         while lobj_popen.poll() is None:
-#             pass
-#         if lobj_popen.poll() is not None and lobj_popen.poll() == 0:
-#             return lstr_output_file_path + ".tsv"
-#         else:
-#             raise Exception(f"Failed to run command {lstr_cmd} returned code {lobj_popen.poll()}")
-#     except Exception:
-#         raise
+def download_file(upload_file_obj):
+    """
+    Utility function to download the file from the request.
+    """
+    file_path = file_path = os.path.join(
+        TEMP_FOLDER_PATH, str(uuid.uuid4()) + "." + upload_file_obj.filename.split(".")[-1])
+    with open(file_path, "wb") as file:
+        file.write(upload_file_obj.file.read())
+    return file_path
 
 
-# def prepare_result(pstr_tsv_file_path):
-#     try:
-#         df = pd.read_csv(pstr_tsv_file_path, sep='\t')
-#     except Exception:
-#         raise
+def image_to_text(file_path, pint_psm=3, pint_oem=1, pstr_lang="eng"):
+    """
+     Utility function to run the tesseract command on the terminal.
+    """
+    try:
+        output_path = f"{file_path.split('.')[0]}-output"
+        if PRODUCTION_MODE:
+            llst_command = [APPIMAGE_510_PATH, "--appimage-extract-and-run", file_path,
+                            output_path, "-l", pstr_lang, "--oem", str(
+                                pint_oem), "--psm", str(pint_psm), "tsv"]
+        else:
+            llst_command = ["tesseract", file_path, output_path,
+                            "-l", pstr_lang, "--oem", str(pint_oem),
+                            "--psm", str(pint_psm), "tsv"]
+
+        lobj_popen = subprocess.Popen(llst_command, stdout=subprocess.PIPE)
+        while lobj_popen.poll() is None:
+            pass
+        if lobj_popen.poll() is not None and lobj_popen.poll() == 0:
+            return output_path + ".tsv"
+        else:
+            raise Exception()
+    except Exception:
+        delete_files([output_path + ".tsv"])
+        command = " ".join(llst_command)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run {command} command. Returned code: {lobj_popen.poll()}")
+
+
+def delete_files(file_paths):
+    """
+    Utility function to delete the files.
+    """
+    try:
+        for file_path in file_paths:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Deleted {file_path}")
+    except Exception:
+        raise

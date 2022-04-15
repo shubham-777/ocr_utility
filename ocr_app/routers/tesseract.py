@@ -27,17 +27,17 @@ async def image_to_text(file: UploadFile):
     try:
         await file.read()
         tesseract_helper.validate_file_type(file)
-        return {"text": "lorem ipsum"}
+        file_path = tesseract_helper.download_file(file)
+        output_path = tesseract_helper.image_to_text(file_path)
+        try:
+            tesseract_helper.delete_files([file_path, output_path])
+        except Exception:
+            print(str(Exception))
+        return {"output_path": output_path}
     except Exception:
+        try:
+            tesseract_helper.delete_files([file_path])
+        except Exception:
+            print(str(Exception))
         print(str(Exception))
         raise
-    # try:
-    #     lobj_helper = Helper(request.input_file.file_name)
-    #     lstr_input_file = lobj_helper.save_file_to_disk(request.input_file)
-    #     lstr_output_file = get_text_using_tesseract(
-    #         lstr_input_file, request.psm, request.oem, request.lang)
-    #     lobj_helper.clean_disk()
-    #     return JSONResponse(status_code=status.HTTP_201_CREATED, content={"check": "success"})
-    # except Exception as ex:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex))

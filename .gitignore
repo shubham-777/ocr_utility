@@ -5,3 +5,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+ocr_app/core/temp/*
+.vscode/settings.json

@@ -4,7 +4,7 @@ Main file for the ocr_utility.
 import uvicorn
 from fastapi import FastAPI
 from routers.tesseract import router
-
+from core.configurations import HOST, PORT, PRODUCTION_MODE
 AUTHOR = "Shubham Ahinave"
 
 app = FastAPI(title="ocr_utility",
@@ -26,4 +26,4 @@ async def root():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("main:app", host=HOST, port=PORT, reload=(not PRODUCTION_MODE))
