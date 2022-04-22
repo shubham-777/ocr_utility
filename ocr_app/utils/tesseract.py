@@ -2,9 +2,10 @@
 python file containing all helper functions needed for tesseract functions.
 """
 import os
+import json
 import subprocess
 import uuid
-
+import pandas as pd
 from fastapi import HTTPException, status
 from core.configurations import TEMP_FOLDER_PATH, PRODUCTION_MODE, APPIMAGE_510_PATH
 
@@ -85,7 +86,7 @@ def image_to_text(file_path, pint_psm=3, pint_oem=1, pstr_lang="eng"):
         if lobj_popen.poll() is not None and lobj_popen.poll() == 0:
             try:
                 result = convert_tsv_to_json(output_path + ".tsv")
-                return result
+                return result, output_path + ".tsv"
             except Exception as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -115,6 +116,8 @@ def delete_files(file_paths):
 
 def convert_tsv_to_json(file_path):
     try:
-        pass
+        df = pd.read_csv(file_path, sep='\t')
+        return json.loads(df.groupby(
+            ["page_num", "block_num", "par_num", "line_num", "word_num"]).agg(lambda x: list(x)).to_json(orient="table"))["data"]
     except Exception:
         raise

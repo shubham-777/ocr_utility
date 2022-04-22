@@ -2,6 +2,7 @@
 Router for tesseract.
 """
 from fastapi import APIRouter, UploadFile
+from fastapi.responses import JSONResponse
 from utils import tesseract as tesseract_helper
 router = APIRouter(prefix="/tesseract",
                    tags=["tesseract"])
@@ -28,12 +29,12 @@ async def image_to_text(file: UploadFile):
         contents = await file.read()
         tesseract_helper.validate_file_type(file)
         file_path = tesseract_helper.download_file(file, contents)
-        output_path = tesseract_helper.image_to_text(file_path)
+        result, output_path = tesseract_helper.image_to_text(file_path)
         try:
             tesseract_helper.delete_files([file_path, output_path])
         except Exception:
             print(str(Exception))
-        return {"output_path": output_path}
+        return result
     except Exception:
         try:
             tesseract_helper.delete_files([file_path])
