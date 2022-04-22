@@ -1,10 +1,11 @@
 """
 python file containing all helper functions needed for tesseract functions.
 """
-import uuid
-from fastapi import HTTPException, status
-import subprocess
 import os
+import subprocess
+import uuid
+
+from fastapi import HTTPException, status
 from core.configurations import TEMP_FOLDER_PATH, PRODUCTION_MODE, APPIMAGE_510_PATH
 
 SUPPORTED_TYPES = [
@@ -39,20 +40,28 @@ def validate_file_type(upload_file_obj):
     Utility function to validate the file type and extension.
     """
     file_extension = upload_file_obj.filename.split(".")[-1]
-    if not (upload_file_obj.content_type.lower() in SUPPORTED_MEDIA_TYPES and file_extension.lower() in SUPPORTED_FILE_EXTENSIONS):
+    if not (upload_file_obj.content_type.lower() in SUPPORTED_MEDIA_TYPES and
+            file_extension.lower() in SUPPORTED_FILE_EXTENSIONS):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File type not supported. Check supported file formats by sending a get request to /tesseract/supported_formats/.")
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="File type not supported. Check" +
+            " supported file formats by sending a get request to /tesseract/supported_formats/.")
 
 
-def download_file(upload_file_obj):
+def download_file(upload_file_obj, contents):
     """
     Utility function to download the file from the request.
     """
-    file_path = file_path = os.path.join(
-        TEMP_FOLDER_PATH, str(uuid.uuid4()) + "." + upload_file_obj.filename.split(".")[-1])
-    with open(file_path, "wb") as file:
-        file.write(upload_file_obj.file.read())
-    return file_path
+    try:
+        file_path = file_path = os.path.join(
+            TEMP_FOLDER_PATH, str(uuid.uuid4()) + "." + upload_file_obj.filename.split(".")[-1])
+        with open(file_path, "wb") as file:
+            file.write(contents)
+        return file_path
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to download file. Error: {e}")
 
 
 def image_to_text(file_path, pint_psm=3, pint_oem=1, pstr_lang="eng"):
@@ -74,7 +83,13 @@ def image_to_text(file_path, pint_psm=3, pint_oem=1, pstr_lang="eng"):
         while lobj_popen.poll() is None:
             pass
         if lobj_popen.poll() is not None and lobj_popen.poll() == 0:
-            return output_path + ".tsv"
+            try:
+                result = convert_tsv_to_json(output_path + ".tsv")
+                return result
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to convert tsv to json. Error: {e}")
         else:
             raise Exception()
     except Exception:
@@ -94,5 +109,12 @@ def delete_files(file_paths):
             if os.path.exists(file_path):
                 os.remove(file_path)
                 print(f"Deleted {file_path}")
+    except Exception:
+        raise
+
+
+def convert_tsv_to_json(file_path):
+    try:
+        pass
     except Exception:
         raise
