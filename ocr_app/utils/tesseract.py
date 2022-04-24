@@ -4,6 +4,7 @@ python file containing all helper functions needed for tesseract functions.
 import os
 import json
 import subprocess
+from unittest import result
 import uuid
 import pandas as pd
 from fastapi import HTTPException, status
@@ -115,9 +116,31 @@ def delete_files(file_paths):
 
 
 def convert_tsv_to_json(file_path):
+    result = {"pages": []}
     try:
-        df = pd.read_csv(file_path, sep='\t')
-        return json.loads(df.groupby(
-            ["page_num", "block_num", "par_num", "line_num", "word_num"]).agg(lambda x: list(x)).to_json(orient="table"))["data"]
+        df = pd.read_csv(file_path, sep='\t').fillna('')
+        for page_num in df["page_num"].unique():
+            result["pages"].append({"page_num": int(page_num), "blocks": []})
+            df_page = df[df["page_num"] == page_num]
+            for block_num in df_page["block_num"].unique():
+                result["pages"][-1]["blocks"].append(
+                    {"block_num": int(block_num), "paragraphs": []})
+                df_block = df_page[df_page["block_num"] == block_num]
+                for par_num in df_block["par_num"].unique():
+                    result["pages"][-1]["blocks"][-1]["paragraphs"].append(
+                        {"par_num": int(par_num), "lines": []})
+                    df_paragraph = df_block[df_block["par_num"]
+                                            == par_num]
+                    for line_num in df_paragraph["line_num"].unique():
+                        result["pages"][-1]["blocks"][-1]["paragraphs"][-1]["lines"].append(
+                            {"line_num": int(line_num), "words": []})
+                        df_line = df_paragraph[df_paragraph["line_num"]
+                                               == line_num]
+                        for word_num in df_line["word_num"].unique():
+                            for _, row in df_line[df_line["word_num"]
+                                                  == word_num].iterrows():
+                                result["pages"][-1]["blocks"][-1]["paragraphs"][-1]["lines"][-1]["words"].append(
+                                    {"word_num": int(word_num), "text": row["text"], "top": float(row["top"]), "left": float(row["left"]), "width": float(row["width"]), "height": float(row["height"]), "conf": float(row["conf"])})
+        return result
     except Exception:
         raise
