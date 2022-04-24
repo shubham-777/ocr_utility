@@ -31,6 +31,7 @@ ocr_utility is a ocr comparision utility.
 ## Notes:
 
 - Tested on Python 3.10.2
+- Toggle the PRODUCTION_MODE variable in config before pushing to production.
 
 ### Command to install all requirements (virtual environment recommended):
 
@@ -54,4 +55,11 @@ docker build -t ocr_utility .
 
 ```sh
 docker run -p 8000:8000 ocr_utility
+```
+
+### Command to push the docker image to heroku
+
+```sh
+heroku container:push web -a ocr_utility
+heroku container:release web -a ocr_utility
 ```
